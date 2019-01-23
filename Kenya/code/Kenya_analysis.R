@@ -61,6 +61,15 @@ r2=function(x,y){round(summary(lm(x ~ y))$r.squared,4)}
 # MPIsubnational2$Population.size.by...County=MPIsubnational2$share.of.pop*MPIsubnational2$Population.2016
 # fwrite(MPIsubnational2,"input/Kenya_MPI_county.csv")
 MPIsubnational=read.csv("input/Kenya_MPI_county.csv")
+# nationalpoverty=read.csv("https://raw.githubusercontent.com/devinit/digital-platform/master/user-data/kenya-poverty-headcount/csv/kenya-poverty-headcount.csv")
+# nationalpoverty$County=toupper(nationalpoverty$district_name)
+# nationalpoverty$County[which(nationalpoverty$County=="ELGEYO-MARAKWET")]="ELGEYO MARAK"
+# nationalpoverty$County[which(nationalpoverty$County=="MURANG'A")]="MURANGA"
+# nationalpoverty$County[which(nationalpoverty$County=="NITHI")]="THARAKA"
+# fwrite(nationalpoverty,"input/national_pov.csv")
+ntl_pov=read.csv("input/national_pov.csv")
+ntl_pov$ntl_pov_hc=ntl_pov$value/100
+ntl_pov=ntl_pov[,c("County","ntl_pov_hc")]
 
 funding=read.csv("E:/git/subnational_need_resources/Kenya/input/Kenya_Health_budget_per_capita_by_county.csv")
 setnames(MPIsubnational,"shregion","County")
@@ -72,7 +81,7 @@ funding$County[which(funding$County=="HOMABAY")]="HOMA BAY"
 funding$County[which(funding$County=="THARAKA NITHI")]="THARAKA"
 funding$County[which(funding$County=="TRANS NZOIA")]="TRANS-NZOIA"
 dat=merge(funding,MPIsubnational,by=c("County"))
-
+dat=merge(dat,ntl_pov,by=c("County"))
 # Province.Names=read.csv("funding/AFG_province_names.csv")
 # AD_pop=read.csv("funding/AidData_AFG_pop.csv")
 # #AidData numbers taken from the GPWv4 UN Adjusted 2015 numbers which are taken from CIESIN
@@ -90,6 +99,9 @@ dat=merge(funding,MPIsubnational,by=c("County"))
 # dat$health.ODA.Z=z.score(dat$Health.ODA..off.budget.disbursements..per.capita.US..)
 dat$MPI.pop.2016=dat$Population.size.by...County*1000
 dat$Ken.Gov.pop.2017.2018=dat$`Population.2017/18`
+
+
+
 
 pop.long=melt(dat[,c("County","MPI.pop.2016","Ken.Gov.pop.2017.2018")],id.vars=c("County")) 
 ggplot(pop.long, aes(x=County,y=(value/1000000)))+
@@ -170,248 +182,17 @@ ggplot(dat, aes(y=health.per.cap.ave,x=np20,label=County))+
   scale_x_continuous(labels=scales::percent)
 ggsave("graphics/health_np20.png")
 
-
-dat.long=melt(dat,id.vars=c("County","need.vs.resources","Child mortality","School attendance","MPI of the County","Nutrition"))
-
-
-
-
-
-# dat$on.need.vs.resources=NA
-# dat$on.need.vs.resources[which(dat$ON.OFF.G.Edu.and.HealthPC<=median(dat$ON.OFF.G.Edu.and.HealthPC)&dat$`MPI of the County`<=median(dat$`MPI of the County`))]="low poverty low resources"
-# dat$on.need.vs.resources[which(dat$ON.OFF.G.Edu.and.HealthPC>median(dat$ON.OFF.G.Edu.and.HealthPC)&dat$`MPI of the County`<=median(dat$`MPI of the County`))]="low poverty high resources"
-# dat$on.need.vs.resources[which(dat$ON.OFF.G.Edu.and.HealthPC>median(dat$ON.OFF.G.Edu.and.HealthPC)&dat$`MPI of the County`>median(dat$`MPI of the County`))]="high poverty high resources"
-# dat$on.need.vs.resources[which(dat$ON.OFF.G.Edu.and.HealthPC<=median(dat$ON.OFF.G.Edu.and.HealthPC)&dat$`MPI of the County`>median(dat$`MPI of the County`))]="high poverty low resources"
-# adding on budGov.Edu.Tot aid shifts Herat from "High Poverty High Resources" to "High Poverty Low Resources" and shifts Paktya from "low poverty low resource" to "low poverty high resource"
-aid.vars= c(
- "Gov.Health.Tot.PC"                                                             
-, "OFF.H.PC"                                                           
-, "ON.H.PC"                                                            
-, "OFF.Gov.Health.Tot.PC"                                                         
-, "ON.OFF.Gov.Health.Tot.PC"                                                      
-, "Gov.Edu.Tot.PC"                                                             
-, "OFF.Edu.PC"                                                           
-, "ON.Edu.PC"                                                            
-, "OFF.Gov.Edu.Tot.PC"                                                         
-, "ON.OFF.Gov.Edu.Tot.PC"                                                      
-, "ON.OFF.Edu.and.HealthPC"                                                       
-, "OFF.G.Edu.and.HealthPC"                                                        
-, "total.health.spend"                                                 
-,"total.educ.spend"                                                   
-, "total.health.and.educ.spend"                                       
-, "ON.OFF.G.Edu.and.HealthPC")
-h.aid.vars= c(
-  "Gov.Health.Tot.PC"                                                             
-  , "OFF.H.PC"                                                           
-  , "ON.H.PC"                                                            
-  , "OFF.Gov.Health.Tot.PC"                                                         
-  , "ON.OFF.Gov.Health.Tot.PC"                                                      
-  , "ON.OFF.Edu.and.HealthPC"                                                       
-  , "OFF.G.Edu.and.HealthPC"                                                        
-  , "total.health.spend"                                                 
-  , "total.health.and.educ.spend"                                       
-  , "ON.OFF.G.Edu.and.HealthPC")
-
-h.aid.long=subset(dat.long, variable %in% h.aid.vars)
-h.aid.long$value=as.numeric(h.aid.long$value)
-h.aid.long$Child.mortality=h.aid.long$Child.mortality/100
-h.aid.long=data.table(h.aid.long)[
-  ,r2:=r2(.SD$value,.SD$Child.mortality)
-  ,by=.(variable)
-]
-h.aid.long=data.table(h.aid.long)[
-  ,value.outlier:=outlier(.SD$value)
-  ,by=.(variable)
-  ]
-h.aid.long$cm.outlier=outlier(h.aid.long$Child.mortality)
-h.aid.long=h.aid.long[which(!h.aid.long$value.outlier | !h.aid.long$cm.outlier),]
-h.aid.long=h.aid.long[order(h.aid.long$r2),]
-h.aid.long$variable=as.character(h.aid.long$variable)
-h.aid.long$variable=factor(h.aid.long$variable,levels=unique(h.aid.long$variable))
-
-ggplot(h.aid.long,aes(x=value,y=Child.mortality))+
-      facet_wrap(~variable)+
-      geom_point(aes(color=factor(need.vs.resources)))+
-      geom_smooth(method="lm")+
-      geom_text(x=150,y=.3,aes(label=paste("R^2: ",r2)))+
-      scale_y_continuous(labels=scales::percent)+
-      scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/different_aid_mortality.png")
-
-##education
-ed.vars= c(
-   "Gov.Edu.Tot.PC"                                                             
-  , "OFF.Edu.PC"                                                           
-  , "ON.Edu.PC"                                                            
-  , "OFF.Gov.Edu.Tot.PC"                                                         
-  , "ON.OFF.Gov.Edu.Tot.PC"                                                      
-  , "ON.OFF.Edu.and.HealthPC"                                                       
-  , "OFF.G.Edu.and.HealthPC"                                                        
-  ,"total.educ.spend"                                                   
-  , "total.health.and.educ.spend"                                       
-  , "ON.OFF.G.Edu.and.HealthPC")
-
-
-e.aid.long=subset(dat.long, variable %in% ed.vars)
-e.aid.long$value=as.numeric(e.aid.long$value)
-e.aid.long=data.table(e.aid.long)[
-  ,r2:=r2(.SD$value,.SD$School.attendance)
-  ,by=.(variable)
-  ]
-e.aid.long=data.table(e.aid.long)[
-  ,value.outlier:=outlier(.SD$value)
-  ,by=.(variable)
-  ]
-e.aid.long$ed.outlier=outlier(e.aid.long$School.attendance)
-e.aid.long=e.aid.long[which(!e.aid.long$value.outlier | !e.aid.long$ed.outlier),]
-e.aid.long=e.aid.long[order(e.aid.long$r2),]
-e.aid.long$variable=as.character(e.aid.long$variable)
-e.aid.long$variable=factor(e.aid.long$variable,levels=unique(e.aid.long$variable))
-e.aid.long$School.attendance=e.aid.long$School.attendance/100
-
-ggplot(e.aid.long,aes(x=value,y=School.attendance))+
-  facet_wrap(~variable)+
-  geom_point(aes(color=factor(need.vs.resources)))+
-  geom_smooth(method="lm")+
-  geom_text(x=150,y=.7,aes(label=paste("R^2: ",r2)))+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/different_aid_education.png")
-
-
-#MPI
-aid.long=subset(dat.long, variable %in% aid.vars)
-aid.long$value=as.numeric(aid.long$value)
-aid.long=data.table(aid.long)[
-  ,r2:=r2(.SD$value,.SD$MPI.of.the.County)
-  ,by=.(variable)
-  ]
-aid.long=data.table(aid.long)[
-  ,value.outlier:=outlier(.SD$value)
-  ,by=.(variable)
-  ]
-aid.long$outlier=outlier(aid.long$MPI.of.the.County)
-aid.long=aid.long[which(!aid.long$value.outlier | !aid.long$outlier),]
-aid.long=aid.long[order(aid.long$r2),]
-aid.long$variable=as.character(aid.long$variable)
-aid.long$variable=factor(aid.long$variable,levels=unique(aid.long$variable))
-
-
-ggplot(aid.long,aes(x=value,y=MPI.of.the.County))+
-  facet_wrap(~variable)+
-  geom_point(aes(color=factor(need.vs.resources)))+
-  geom_smooth(method="lm")+
-  geom_text(x=150,y=.3,aes(label=paste("R^2: ",r2)))+
-  theme_classic()+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/different_aid_MPI.png")
-
-##End facet wraps
-
-
-
-ggplot(dat, aes(x=Health.spending..per.capita.US..,y=Health.ODA..off.budGov.Edu.Tot.disbursements..per.capita.US..,label=County))+
-  labs(title="Government health spending and ODA",x="Government health spending per capita",y="Off budGov.Edu.Tot health ODA per capita")+
+ggplot(dat, aes(y=health.per.cap.ave,x=ntl_pov_hc,label=County))+
   geom_point(color="grey")+
   geom_text(check_overlap=T,  size=2.5)+
-  geom_text(x=20,y=15,label=paste("R^2: ",r2(dat$Health.spending..per.capita.US..,dat$Health.ODA..off.budget.disbursements..per.capita.US..)), parse=T)+
+  geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$ntl_pov_hc)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$ntl_pov_hc)), parse=T)+
+  labs(title="Average government health spending and share of households in national P20",y="Average annual health spending per capita",x="Percentage of population below national poverty line")+
   theme_classic()+
   theme(legend.title=element_blank())+
   scale_y_continuous(labels=scales::dollar)+
-  scale_x_continuous(labels=scales::dollar)
-
-ggplot(dat, aes(x=Gov.Health.Tot.PC,y=OFF.H.PC,label=County))+
-  labs(title="Government health spending and ODA MPI pop",x="Government health spending per capita",y="Off budGov.Edu.Tot health ODA per capita")+
-  geom_point(color="grey")+
-  geom_text(check_overlap=T,  size=2.5)+
-  geom_text(x=20,y=15,label=paste("R^2: ",r2(dat$Gov.Health.Tot,dat$OFF.H.PC)), parse=T)+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::dollar)+
-  scale_x_continuous(labels=scales::dollar)
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/health_ntl_pov.png")
 
 
-ggsave("graphics/health_spend_corr_ODA.png")
-ggplot(dat, aes(x=Health.spending..per.capita.US..,y=(`Child mortality`/100),label=County))+
-  geom_text(x=17,y=.35,label=paste("R^2: ",r2(dat$Health.spending..per.capita.US..,dat$`Child mortality`)), parse=T)+
-  labs(title="Government health spending and child mortality",x="Government health spending per capita",y="Households with recent child mortality")+
-  geom_point(aes(color=factor(high.child.mort)))+
-  geom_text(check_overlap=T,  size=2.5)+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/gov_health_child_mortality.png")
-ggplot(dat, aes(x=Health.ODA..off.budGov.Edu.Tot.disbursements..per.capita.US..,y=(`Child mortality`/100),label=County))+
-  geom_text(x=12,y=.35,label=paste("R^2: ",r2(dat$Health.ODA..off.budget.disbursements..per.capita.US..,dat$`Child mortality`)), parse=T)+
-  labs(title="Health ODA and child mortality",x="Health ODA per capita",y="Households with recent child mortality")+
-  geom_point(aes(color=factor(high.child.mort)))+
-  geom_text(check_overlap=T,  size=2.5)+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/gov_health_child_mortality.png")
-ggplot(dat, aes(x=total.health.spend,y=(`Child mortality`/100),label=County))+
-  geom_text(x=20,y=.35,label=paste("R^2: ",r2(dat$total.health.spend,dat$`Child mortality`)), parse=T)+
-  labs(title="Total health spending and child mortality",x="Total health spending per capita",y="Households with recent child mortality")+
-  geom_point(aes(color=factor(high.child.mort)))+
-  geom_text(check_overlap=T,  size=2.5)+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/total_health_child_mortality.png")
 
-
-ggplot(dat, aes(x=General.education.spending..per.capita.US..,y=Education.ODA..off.budGov.Edu.Tot.disbursements..per.capita.US..,label=County))+
-  labs(title="Government education spending and ODA",x="Government education spending per capita",y="Off budGov.Edu.Tot education ODA per capita")+
-  geom_point(color="grey")+
-  geom_text(check_overlap=T,  size=2.5)+
-  geom_text(x=120,y=7.5,label=paste("R^2: ",r2(dat$General.education.spending..per.capita.US..,dat$Education.ODA..off.budGov.Edu.Tot.disbursements..per.capita.US..)), parse=T)+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::dollar)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/educ_spend_corr_ODA.png")
-ggplot(dat, aes(x=General.education.spending..per.capita.US..,y=(`School attendance`/100),label=County))+
-  geom_text(x=120,y=.75,label=paste("R^2: ",r2(dat$General.education.spending..per.capita.US..,dat$`School attendance`)), parse=T)+
-  labs(title="Government education budGov.Edu.Tot & school absentee",x="Total education spending per capita",y="School-aged children not in school")+
-  geom_point(aes(color=factor(low.school.attend)))+
-  geom_text(check_overlap=T,  size=2.5)+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/gov_educ_spend_attend.png")
-ggplot(dat, aes(x=Education.ODA..off.budGov.Edu.Tot.disbursements..per.capita.US..,y=(`School attendance`/100),label=County))+
-  geom_point(aes(color=factor(low.school.attend)))+
-  geom_text(check_overlap=T,  size=2.5)+
-  geom_text(x=7,y=.75,label=paste("R^2: ",r2(dat$Education.ODA..off.budGov.Edu.Tot.disbursements..per.capita.US..,dat$`School attendance`)), parse=T)+
-  labs(title="Education ODA and school absentees",x="Education ODA per capita",y="School-aged children not in school")+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/educ_oda_attend.png")
-
-ggplot(dat, aes(x=total.educ.spend,y=(`School attendance`/100),label=County))+
-  geom_point(aes(color=factor(low.school.attend)))+
-  geom_text(check_overlap=T,  size=2.5)+
-  geom_text(x=120,y=.75,label=paste("R^2: ",r2(dat$total.educ.spend,dat$`School attendance`)), parse=T)+
-  labs(title="Total education spending and school absentees",x="Total education spending per capita",y="School-aged children not in school")+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/educ_spend_attend.png")
-ggplot(dat, aes(x=total.health.and.educ.spend,y=MPI,label=County))+
-  geom_point(aes(color=high.MPI))+
-  geom_text(check_overlap=T,  size=2.5)+
-  geom_text(x=150,y=.5,label=paste("R^2: ",r2(dat$total.health.and.educ.spend,dat$MPI)), parse=T)+
-  labs(title="Total health and education spending and MPI",x="Total health and education spending per capita",y="Multidimensional poverty index")+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_x_continuous(labels=scales::dollar)
-ggsave("graphics/health_educ_MPI.png")
 
