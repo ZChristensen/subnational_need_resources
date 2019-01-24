@@ -59,7 +59,7 @@ r2=function(x,y){round(summary(lm(x ~ y))$r.squared,4)}
 # MPIsubnational2$Population.2016=NA
 # MPIsubnational2$Population.2016=MPIpop
 # MPIsubnational2$Population.size.by...County=MPIsubnational2$share.of.pop*MPIsubnational2$Population.2016
-# fwrite(MPIsubnational2,"input/Kenya_MPI_county.csv")
+#  fwrite(MPIsubnational2,"input/Kenya_MPI_county.csv")
 MPIsubnational=read.csv("input/Kenya_MPI_county.csv")
 # nationalpoverty=read.csv("https://raw.githubusercontent.com/devinit/digital-platform/master/user-data/kenya-poverty-headcount/csv/kenya-poverty-headcount.csv")
 # nationalpoverty$County=toupper(nationalpoverty$district_name)
@@ -98,7 +98,7 @@ dat=merge(dat,ntl_pov,by=c("County"))
 # dat$health.pc.Z=z.score(dat$Health.spending..per.capita.US..)
 # dat$health.ODA.Z=z.score(dat$Health.ODA..off.budget.disbursements..per.capita.US..)
 dat$MPI.pop.2016=dat$Population.size.by...County*1000
-dat$Ken.Gov.pop.2017.2018=dat$`Population.2017/18`
+dat$Ken.Gov.pop.2017.2018=dat$Population.2017.18
 
 
 
@@ -113,22 +113,8 @@ ggsave("graphics/population_estimates.png")
 
 
 
-# dat$low.health.spend="other countries"
-# dat$low.health.spend[which(dat$total.health.spend<(mean(dat$total.health.spend)-sd(dat$total.health.spend)))]="high spend"
-# #No Countys are below one sd from the mean total health spending
-# dat$high.child.mort="other countries"
-# dat$high.child.mort[which(dat$`Child mortality`>(mean(dat$`Child mortality`)+sd(dat$`Child mortality`)))]="high mortality"
-# #Kandahar and Nooristan have a child mortality that is more than 1 sd above the mean
-# dat$low.educ.spend="other countries"
-# dat$low.educ.spend[which(dat$total.educ.spend<(mean(dat$total.educ.spend)-sd(dat$total.educ.spend)))]=1
-# #Kabul Khost are the provinces with low total education spending pc
-# dat$low.school.attend="other countries"
-# dat$low.school.attend[which(dat$`School attendance`>(mean(dat$`School attendance`)+sd(dat$`School attendance`)))]="low attendance"
-# #Balkh    Faryab   Kabul    Kapisa   Panjsher are the provinces that are more than 1 SD below the mean 
-# dat$high.MPI="other countries"
-# dat$high.MPI[which(dat$`MPI of the County`>(mean(dat$`MPI of the County`)+sd(dat$`MPI of the County`)))]="high MPI"
-
 dat$health.per.cap.ave=(dat$Health..Budget.per.capita..US...2015.17+dat$Health..Expenditure.per.capita..US...2017.19)/3
+
 
 dat$need.vs.resources=NA
 dat$need.vs.resources[which(dat$health.per.cap.ave<=median(dat$health.per.cap.ave)&dat$MPI<=median(dat$MPI))]="low poverty low resources"
@@ -136,42 +122,52 @@ dat$need.vs.resources[which(dat$health.per.cap.ave>median(dat$health.per.cap.ave
 dat$need.vs.resources[which(dat$health.per.cap.ave>median(dat$health.per.cap.ave)&dat$MPI>median(dat$MPI))]="high poverty high resources"
 dat$need.vs.resources[which(dat$health.per.cap.ave<=median(dat$health.per.cap.ave)&dat$MPI>median(dat$MPI))]="high poverty low resources"
 
+setnames(dat,"County","region")
+setnames(dat,"MPI","MPI.of.the.region")
+dat$educ.per.cap.ave=NA
+dat$Country="Kenya"
+
+dat2=dat[c("region","educ.per.cap.ave","School.attendance","health.per.cap.ave","Child.mortality","MPI.of.the.region","need.vs.resources","MPI.pop.2016","Country")]
+fwrite(dat2,"graphics/output.csv")
 
 
-ggplot(dat, aes(y=health.per.cap.ave,x=MPI,label=County))+
+ggplot(dat, aes(y=health.per.cap.ave,x=MPI.of.the.region,label=region))+
   geom_point(color="grey")+
   geom_text(check_overlap=T,  size=2.5)+
-  geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$MPI)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$MPI)), parse=T)+
-  labs(title="Average government health spending and MPI",y="Average annual health spending per capita",x="Multidimensional poverty index")+
+  geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$MPI.of.the.region)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$MPI.of.the.region)), parse=T)+
+  labs(title="health government spending and MPI",y="Government health spending\nper capita",x="Multidimensional poverty index")+
   theme_classic()+
   theme(legend.title=element_blank())+
   scale_y_continuous(labels=scales::dollar)
-ggsave("graphics/health_MPI.png")
+ggsave("graphics/health_edu_MPI.png")
 
-ggplot(dat, aes(y=health.per.cap.ave,x=Child.mortality,label=County))+
+
+ggplot(dat, aes(y=health.per.cap.ave,x=Child.mortality,label=region))+
   geom_point(color="grey")+
   geom_text(check_overlap=T,  size=2.5)+
   geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$Child.mortality)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$Child.mortality)), parse=T)+
-  labs(title="Average government health spending and child mortality",y="Average annual health spending per capita",x="Households having experienced a child mortality in last 5 years")+
+  labs(title="Government health spending and child mortality",y="Health government spending\nper capita",x="Households having experienced a child mortality in last 5 years")+
   theme_classic()+
   theme(legend.title=element_blank())+
   scale_y_continuous(labels=scales::dollar)+
   scale_x_continuous(labels=scales::percent)
-ggsave("graphics/health_Child_mortality.png")
-
-ggplot(dat, aes(y=health.per.cap.ave,x=Nutrition,label=County))+
-  geom_point(color="grey")+
-  geom_text(check_overlap=T,  size=2.5)+
-  geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$Nutrition)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$Nutrition)), parse=T)+
-  labs(title="Average government health spending and malnutrition",y="Average annual health spending per capita",x="Households with person experiencing malnutrition")+
-  theme_classic()+
-  theme(legend.title=element_blank())+
-  scale_y_continuous(labels=scales::dollar)+
-  scale_x_continuous(labels=scales::percent)
-ggsave("graphics/health_nutrition.png")
+ggsave("graphics/health_gov_Child_mortality.png")
 
 
-ggplot(dat, aes(y=health.per.cap.ave,x=np20,label=County))+
+# ggplot(dat, aes(y=educ.per.cap.ave,x=School.attendance,label=region))+
+#   geom_point(color="grey")+
+#   geom_text(check_overlap=T,  size=2.5)+
+#   geom_text(y=.9*(max(dat$educ.per.cap.ave)),x=.9*(max(dat$School.attendance)),label=paste("R^2: ",r2(dat$educ.per.cap.ave,dat$School.attendance)), parse=T)+
+#   labs(title="Government education spending and school attendance",y="Average annual government spending\nper capita",x="Households with a child not attending school")+
+#   theme_classic()+
+#   theme(legend.title=element_blank())+
+#   scale_y_continuous(labels=scales::dollar)+
+#   scale_x_continuous(labels=scales::percent)
+# ggsave("graphics/education_gov_absenteeism.png")
+
+
+
+ggplot(dat, aes(y=health.per.cap.ave,x=np20,label=region))+
   geom_point(color="grey")+
   geom_text(check_overlap=T,  size=2.5)+
   geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.75,label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$np20)), parse=T)+
@@ -182,16 +178,17 @@ ggplot(dat, aes(y=health.per.cap.ave,x=np20,label=County))+
   scale_x_continuous(labels=scales::percent)
 ggsave("graphics/health_np20.png")
 
-ggplot(dat, aes(y=health.per.cap.ave,x=ntl_pov_hc,label=County))+
+ggplot(dat, aes(y=health.per.cap.ave,x=ntl_pov_hc,label=region))+
   geom_point(color="grey")+
   geom_text(check_overlap=T,  size=2.5)+
   geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$ntl_pov_hc)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$ntl_pov_hc)), parse=T)+
-  labs(title="Average government health spending and share of households in national P20",y="Average annual health spending per capita",x="Percentage of population below national poverty line")+
+  labs(title="Average government health spending and\nshare of households in national P20",y="Average annual health spending per capita",x="Percentage of population below national poverty line")+
   theme_classic()+
   theme(legend.title=element_blank())+
   scale_y_continuous(labels=scales::dollar)+
   scale_x_continuous(labels=scales::percent)
 ggsave("graphics/health_ntl_pov.png")
+
 
 
 

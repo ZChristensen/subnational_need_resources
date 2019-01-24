@@ -1,0 +1,35 @@
+country,MPI list,aid list,budget list,aidData.list,MPI and aid match,MPI and budget match,changes
+Afghanistan,Badakhshan,Badakhshan,Badakhshan,Badakhshan,TRUE,TRUE,
+Afghanistan,Badghis,Badghis,Badghis,Badghis,TRUE,TRUE,
+Afghanistan,Baghlan,Baghlan,Baghlan,Baghlan,TRUE,TRUE,
+Afghanistan,Balkh,Balkh,Balkh,Balkh,TRUE,TRUE,
+Afghanistan,Bamyan,Bamyan,Bamian,Bamyan,TRUE,FALSE,adjusted 'Bamian' to 'Bayman' in budget sheet
+Afghanistan,Daykundi,Day Kundi,Daikundi,Daykundi,FALSE,FALSE,adjusted 'Day Kundi' to 'Daykundi' in aid sheet; adjusted 'Daikundi' to 'Daykundi' in budget sheet
+Afghanistan,Farah,Farah,Farah,Farah,TRUE,TRUE,
+Afghanistan,Faryab,Faryab,Faryab,Faryab,TRUE,TRUE,
+Afghanistan,Ghazni,Ghazni,Ghazni,Ghazni,TRUE,TRUE,
+Afghanistan,Ghor,Ghor,Ghor,Ghor,TRUE,TRUE,
+Afghanistan,Helmand,Hilmand,Helmand,Hilmand,FALSE,TRUE,adjusted 'Hilmand' to 'Helmand' in the aid sheet
+Afghanistan,Herat,Hirat,Herat,Hirat,FALSE,TRUE,adjusted 'Hirat' to 'Herat' in aid sheet
+Afghanistan,Jawzjan,Jawzjan,Jawzjan,Jawzjan,TRUE,TRUE,
+Afghanistan,Kabul,Kabul,Kabul,Kabul,TRUE,TRUE,
+Afghanistan,Kandahar,Kandahar,Kandahar,Kandahar,TRUE,TRUE,
+Afghanistan,Kapisa,Kapisa,Kapisa,Kapisa,TRUE,TRUE,
+Afghanistan,Khost,Khost,Khost,Khost,TRUE,TRUE,
+Afghanistan,Kunarha,Kunar,Kunar,Kunar,FALSE,FALSE,adjusted 'Kunar' to 'Kunarha' in both aid and budget sheets
+Afghanistan,Kunduz,Kunduz,Kunduz,Kunduz,TRUE,TRUE,
+Afghanistan,Laghman,Laghman,Laghman,Laghman,TRUE,TRUE,
+Afghanistan,Logar,Logar,Logar,Logar,TRUE,TRUE,
+Afghanistan,Nangarhar,Nangarhar,Nangarhar,Nangarhar,TRUE,TRUE,
+Afghanistan,Nimroz,Nimroz,Nimroz,Nimroz,TRUE,TRUE,
+Afghanistan,Nooristan,Nuristan,Nurestan,Nuristan,FALSE,FALSE,Adjusted 'Nuristan' to 'Nooristan' in aid sheet; adjusted 'Nurestan' to 'Nooristan' in budget sheet
+Afghanistan,Paktika,Paktika,Paktika,Paktika,TRUE,TRUE,
+Afghanistan,Paktya,Paktya,Paktia,Paktya,TRUE,FALSE,Adjusted 'Paktia' to 'Paktya' in budget sheet
+Afghanistan,Panjsher,Panjsher,Panjshir,Panjsher,TRUE,FALSE,Adjusted 'Panjshir' to 'Panjsher' in budget sheet
+Afghanistan,Parwan,Parwan,Parwan,Parwan,TRUE,TRUE,
+Afghanistan,Samangan,Samangan,Samangan,Samangan,TRUE,TRUE,
+Afghanistan,Sar-E-Pul,Sari Pul,serpole,Sar-e-Pul,FALSE,FALSE,adjusted 'Sari Pul' to 'Sar-E-Pul' in aid sheet; adjusted 'serpole' to 'Sar-E-Pul' in budget sheet
+Afghanistan,Takhar,Takhar,Takhar,Takhar,TRUE,TRUE,
+Afghanistan,Urozgan,Uruzgan,Uruzgan,Uruzgan,FALSE,FALSE,
+Afghanistan,Wardak,Wardak,Wardak,Wardak,TRUE,TRUE,
+Afghanistan,Zabul,Zabul,Zabul,Zabul,TRUE,TRUE,

@@ -9,18 +9,18 @@ if(Sys.info()[["user"]]=="Alex"){
   prefix = "E:"
 }
 
-wd = paste0(prefix,"/git/mpi_recalc")
+wd = paste0(prefix,"/git/subnational_need_resources/Afghanistan")
 setwd(wd)
 
-z.score=function(x){(x-mean(x))/sd(x)}
+# z.score=function(x){(x-mean(x))/sd(x)}
 r2=function(x,y){round(summary(lm(x ~ y))$r.squared,4)}
-outlier = function(x){
-  qnt = quantile(x, probs=c(0.25, 0.75), na.rm=T)
-  H = 1.5 * IQR(x, na.rm=T)
-  return(
-    (x < (qnt[1] - H)) | (x > (qnt[2] + H))
-  )
-}
+# outlier = function(x){
+#   qnt = quantile(x, probs=c(0.25, 0.75), na.rm=T)
+#   H = 1.5 * IQR(x, na.rm=T)
+#   return(
+#     (x < (qnt[1] - H)) | (x > (qnt[2] + H))
+#   )
+# }
 
 MPIsubnational=read_excel("MPI_downloads/Table-5-Subnational-MPI-2018-1.xlsx", sheet="5.5 Raw Headcounts Region",range=cell_rows(9:1138))
 MPIsubnational=MPIsubnational[,c(
@@ -208,27 +208,133 @@ ggplot()+
     labs(title=paste(nam,"and MPI with three populations"),y=paste(nam,"spending per capita"),x="Multidimensional Poverty Index")
   ggsave(filenam)  
 
-# dat$low.health.spend="other countries"
-# dat$low.health.spend[which(dat$total.health.spend<(mean(dat$total.health.spend)-sd(dat$total.health.spend)))]="high spend"
-# #No regions are below one sd from the mean total health spending
-# dat$high.child.mort="other countries"
-# dat$high.child.mort[which(dat$`Child mortality`>(mean(dat$`Child mortality`)+sd(dat$`Child mortality`)))]="high mortality"
-# #Kandahar and Nooristan have a child mortality that is more than 1 sd above the mean
-# dat$low.educ.spend="other countries"
-# dat$low.educ.spend[which(dat$total.educ.spend<(mean(dat$total.educ.spend)-sd(dat$total.educ.spend)))]=1
-# #Kabul Khost are the provinces with low total education spending pc
-# dat$low.school.attend="other countries"
-# dat$low.school.attend[which(dat$`School attendance`>(mean(dat$`School attendance`)+sd(dat$`School attendance`)))]="low attendance"
-# #Balkh    Faryab   Kabul    Kapisa   Panjsher are the provinces that are more than 1 SD below the mean 
-# dat$high.MPI="other countries"
-# dat$high.MPI[which(dat$`MPI of the region`>(mean(dat$`MPI of the region`)+sd(dat$`MPI of the region`)))]="high MPI"
-
 
 dat$need.vs.resources=NA
 dat$need.vs.resources[which(dat$OFF.G.Edu.and.HealthPC<=median(dat$OFF.G.Edu.and.HealthPC)&dat$`MPI of the region`<=median(dat$`MPI of the region`))]="low poverty low resources"
 dat$need.vs.resources[which(dat$OFF.G.Edu.and.HealthPC>median(dat$OFF.G.Edu.and.HealthPC)&dat$`MPI of the region`<=median(dat$`MPI of the region`))]="low poverty high resources"
 dat$need.vs.resources[which(dat$OFF.G.Edu.and.HealthPC>median(dat$OFF.G.Edu.and.HealthPC)&dat$`MPI of the region`>median(dat$`MPI of the region`))]="high poverty high resources"
 dat$need.vs.resources[which(dat$OFF.G.Edu.and.HealthPC<=median(dat$OFF.G.Edu.and.HealthPC)&dat$`MPI of the region`>median(dat$`MPI of the region`))]="high poverty low resources"
+dat$health.per.cap.ave=dat$Gov.Health.Tot.PC.MPI
+dat$educ.per.cap.ave=dat$Gov.Edu.Tot.PC.MPI
+dat$educ.oda.per.cap.ave=dat$OFF.Edu.PC.MPI+dat$ON.Edu.PC.MPI
+dat$health.oda.per.cap.ave=dat$OFF.H.PC.MPI+dat$ON.H.PC.MPI
+dat$educ.and.health.per.cap.ave=dat$educ.per.cap.ave+dat$health.per.cap.ave
+dat$educ.and.health.oda.per.cap.ave=dat$educ.oda.per.cap.ave+dat$health.oda.per.cap.ave
+dat$health.oda.gov.per.cap.ave=dat$health.oda.per.cap.ave+dat$health.per.cap.ave
+dat$educ.oda.gov.per.cap.ave=dat$educ.oda.per.cap.ave+dat$educ.per.cap.ave
+dat$educ.and.health.oda.gov.per.cap.ave=dat$health.oda.gov.per.cap+dat$educ.oda.gov.per.cap
+
+ggplot(dat, aes(y=educ.and.health.per.cap.ave,x=MPI.of.the.region,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.and.health.per.cap.ave)),x=.9*(max(dat$MPI.of.the.region)),label=paste("R^2: ",r2(dat$educ.and.health.per.cap.ave,dat$MPI.of.the.region)), parse=T)+
+  labs(title="Health and education government spending and MPI",y="Government health and education spending\nper capita",x="Multidimensional poverty index")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)
+ggsave("graphics/health_edu_MPI.png")
+
+
+ggplot(dat, aes(y=health.per.cap.ave,x=Child.mortality,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$health.per.cap.ave)),x=.9*(max(dat$Child.mortality)),label=paste("R^2: ",r2(dat$health.per.cap.ave,dat$Child.mortality)), parse=T)+
+  labs(title="Government health spending and child mortality",y="Health government spending\nper capita",x="Households having experienced a child mortality in last 5 years")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/health_gov_Child_mortality.png")
+
+
+ggplot(dat, aes(y=educ.per.cap.ave,x=School.attendance,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.per.cap.ave)),x=.9*(max(dat$School.attendance)),label=paste("R^2: ",r2(dat$educ.per.cap.ave,dat$School.attendance)), parse=T)+
+  labs(title="Government education spending and school attendance",y="Average annual government spending\nper capita",x="Households with a child not attending school")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/education_gov_absenteeism.png")
+#ODA
+ggplot(dat, aes(y=educ.and.health.oda.per.cap.ave,x=MPI.of.the.region,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.and.health.oda.per.cap.ave)),x=.9*(max(dat$MPI.of.the.region)),label=paste("R^2: ",r2(dat$educ.and.health.oda.per.cap.ave,dat$MPI.of.the.region)), parse=T)+
+  labs(title="Health and education ODA spending and MPI",y="ODA health and education spending\nper capita",x="Multidimensional poverty index")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)
+ggsave("graphics/health_edu_ODA_MPI.png")
+
+
+ggplot(dat, aes(y=health.oda.per.cap.ave,x=Child.mortality,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$health.oda.per.cap.ave)),x=.9*(max(dat$Child.mortality)),label=paste("R^2: ",r2(dat$health.oda.per.cap.ave,dat$Child.mortality)), parse=T)+
+  labs(title="ODA health spending and child mortality",y="Health ODA spending\nper capita",x="Households having experienced a child mortality in last 5 years")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/health_ODA_Child_mortality.png")
+
+
+ggplot(dat, aes(y=educ.oda.per.cap.ave,x=School.attendance,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.oda.per.cap.ave)),x=.9*(max(dat$School.attendance)),label=paste("R^2: ",r2(dat$educ.oda.per.cap.ave,dat$School.attendance)), parse=T)+
+  labs(title="ODA education spending and school attendance",y="Average annual ODA spending\nper capita",x="Households with a child not attending school")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/education_ODA_absenteeism.png")
+
+#ODA plus gov
+ggplot(dat, aes(y=educ.and.health.oda.gov.per.cap.ave,x=MPI.of.the.region,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.and.health.oda.gov.per.cap.ave)),x=.9*(max(dat$MPI.of.the.region)),label=paste("R^2: ",r2(dat$educ.and.health.oda.gov.per.cap.ave,dat$MPI.of.the.region)), parse=T)+
+  labs(title="Health and education ODA and Government spending and MPI",y="ODA and Government health and education spending\nper capita",x="Multidimensional poverty index")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)
+ggsave("graphics/health_edu_gov_ODA_MPI.png")
+
+
+ggplot(dat, aes(y=health.oda.gov.per.cap.ave,x=Child.mortality,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$health.oda.gov.per.cap.ave)),x=.9*(max(dat$Child.mortality)),label=paste("R^2: ",r2(dat$health.oda.gov.per.cap.ave,dat$Child.mortality)), parse=T)+
+  labs(title="ODA and Government health spending and child mortality",y="Health ODA and Government spending\nper capita",x="Households having experienced a child mortality in last 5 years")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/health_gov_ODA_Child_mortality.png")
+
+
+ggplot(dat, aes(y=educ.oda.gov.per.cap.ave,x=School.attendance,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.oda.gov.per.cap.ave)),x=.9*(max(dat$School.attendance)),label=paste("R^2: ",r2(dat$educ.oda.gov.per.cap.ave,dat$School.attendance)), parse=T)+
+  labs(title="ODA and Government education spending and school attendance",y="Average annual ODA and Government spending\nper capita",x="Households with a child not attending school")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/education_gov_ODA_absenteeism.png")
+
+
+
+
+dat3=dat[c("region","educ.per.cap.ave","School.attendance","health.per.cap.ave","Child.mortality","MPI.of.the.region","need.vs.resources","MPI.pop.2016","Country","educ.oda.per.cap.ave","health.oda.per.cap.ave")]
+fwrite(dat3,"graphics/output.csv")
+
+
+
 
 
 
