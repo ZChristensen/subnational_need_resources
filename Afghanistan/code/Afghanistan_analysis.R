@@ -22,7 +22,7 @@ r2=function(x,y){round(summary(lm(x ~ y))$r.squared,4)}
 #   )
 # }
 
-MPIsubnational=read_excel("MPI_downloads/Table-5-Subnational-MPI-2018-1.xlsx", sheet="5.5 Raw Headcounts Region",range=cell_rows(9:1138))
+MPIsubnational=read_excel("E:/git/mpi_recalc/MPI_downloads/Table-5-Subnational-MPI-2018-1.xlsx", sheet="5.5 Raw Headcounts Region",range=cell_rows(9:1138))
 MPIsubnational=MPIsubnational[,c(
   "ISO Num code"                                        
   ,"ISO Code"                                            
@@ -55,15 +55,15 @@ MPIsubnational=MPIsubnational[which(MPIsubnational$Country=="Afghanistan"),]
 names(MPIsubnational)=make.names(names(MPIsubnational))
 MPIsubnational$region=MPIsubnational$Subnational...region
 
-funding=read.csv("funding/AFG_GovExp_ODA_2017.csv")
+funding=read.csv("input/AFG_GovExp_ODA_2017.csv")
 funding=funding[1:34,]
 setnames(funding,"Province","region")
 funding$region=as.character(funding$region)
 funding$region[which(funding$region=="Uruzgan")]="Urozgan"
 dat=merge(funding,MPIsubnational,by=c("region"))
 
-Province.Names=read.csv("funding/AFG_province_names.csv")
-AD_pop=read.csv("funding/AidData_AFG_pop.csv")
+Province.Names=read.csv("input/AFG_province_names.csv")
+AD_pop=read.csv("input/AidData_AFG_pop.csv")
 #AidData numbers taken from the GPWv4 UN Adjusted 2015 numbers which are taken from CIESIN
 AD_pop=AD_pop[,c("gpw_v4_count.2015.sum","Name")]
 names(AD_pop)=c("AidData.2015.pop","aidData.list")
@@ -333,10 +333,21 @@ ggsave("graphics/education_gov_ODA_absenteeism.png")
 dat3=dat[c("region","educ.per.cap.ave","School.attendance","health.per.cap.ave","Child.mortality","MPI.of.the.region","need.vs.resources","MPI.pop.2016","Country","educ.oda.per.cap.ave","health.oda.per.cap.ave")]
 fwrite(dat3,"graphics/output.csv")
 
+#National Poverty Line
+ntl_pov=read.csv("input/Afghanistan_subnational_poverty.csv")
+setnames(ntl_pov,"Province","region")
+dat=merge(dat,ntl_pov,by=c("region"))
 
-
-
-
+ggplot(dat, aes(y=educ.and.health.oda.gov.per.cap.ave,x=Poverty.rate.2016.17,label=region))+
+  geom_point(color="grey")+
+  geom_text(check_overlap=T,  size=2.5)+
+  geom_text(y=.9*(max(dat$educ.and.health.oda.gov.per.cap.ave)),x=.9*(max(dat$Poverty.rate.2016.17)),label=paste("R^2: ",r2(dat$educ.and.health.oda.gov.per.cap.ave,dat$Poverty.rate.2016.17)), parse=T)+
+  labs(title="Health and education ODA and Government spending\nand National Poverty Rate",y="ODA & Government health & education spending\nper capita",x="National poverty rate 2016/17")+
+  theme_classic()+
+  theme(legend.title=element_blank())+
+  scale_y_continuous(labels=scales::dollar)+
+  scale_x_continuous(labels=scales::percent)
+ggsave("graphics/health_edu_gov_ODA_Ntl_Pov.png")
 
 dat.long=melt(dat,id.vars=c("region","need.vs.resources","Child mortality","School attendance","MPI of the region"))
 
