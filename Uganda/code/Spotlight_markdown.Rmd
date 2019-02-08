@@ -1,0 +1,138 @@
+---
+title: "Uganda Correlations"
+author: "Zach Christensen"
+date: "February 7, 2019"
+header-includes:
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
+output:
+  pdf_document:
+    toc: true
+    
+---
+
+```{r setup, include=FALSE}
+wd = "C:/Users/Zach/Box/Subnational paper - Q1 2019/Uganda"
+setwd(wd)
+source("code/spotlight_on_uganda_source.R")
+library(scales)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Uganda health correlations
+
+```{r, results="asis",message=F,warning=F}
+for(input in inputs.health){
+  temp=subset(uga.m2, indicator==input)
+  temp$z.score=z.score(temp$value)
+ 
+  x.label=unique(temp$var.description)
+  y.label="Government health spending per capita"
+  title.label=paste0(x.label," & ",y.label )
+  
+  file.name=paste0("graphics/","health_gov_",unique(temp$indicator),".png")
+  p=ggplot(temp, aes(y=health.per.cap.ave,x=value,label=region))+
+    geom_point(color="grey")+
+    geom_text(check_overlap=T,  size=2.5)+
+    labs(y=y.label,x=x.label)+
+    theme_classic()+
+    theme(legend.title=element_blank())+  
+    geom_smooth(method="lm")+
+    scale_y_continuous(labels=scales::dollar)
+   cat("\n")
+  cat("### ",title.label,"\n")
+  print(p)
+  cat("\n\n\\pagebreak\n")
+  
+  x.label.z=paste(unique(temp$var.description),"z score")
+  y.label.z=paste("Government health spending per capita","z score")
+  title.label.z=paste0(x.label.z," & ",y.label.z )
+
+  
+  
+  p=ggplot(temp, aes(y=health.per.cap.ave.z,x=z.score,label=region))+
+    geom_point(color="grey")+
+    geom_text(check_overlap=T,  size=2.5)+
+    labs(y=y.label.z,x=x.label.z)+
+    theme_classic()+
+    theme(legend.title=element_blank())+  
+    geom_smooth(method="lm")+
+    geom_vline(xintercept = 0)+
+    geom_hline(yintercept=0) 
+  
+ cat("\n")
+  cat("### ",title.label,"\n")
+  print(p)
+  cat("\n\n\\pagebreak\n")
+  cat("\n\n\\blandscape\n")
+  reg=lm(temp$value~temp$health.per.cap.ave)
+  reg2=glm(rescale(temp$value)~temp$health.per.cap.ave,family=binomial(link="probit"))
+  reg3=lm(temp$value[which(temp$z.score<2 & temp$health.per.cap.ave.z<2)]~temp$health.per.cap.ave[which(temp$z.score<2 & temp$health.per.cap.ave.z<2)])
+  stargazer(reg,reg2,reg3,dep.var.labels=c("Health spending per capita","Health spending per capita","Outliers dropped"),covariate.labels = c( x.label,x.label),header=F)
+cat("\n\n\\elandscape\n")
+  cat("\n\n\\pagebreak\n")
+  
+}
+
+
+
+
+```
+
+##Education
+```{r, results="asis",message=F,warning=F}
+for(input in inputs.educ){
+  temp=subset(uga.m2, indicator==input)
+  temp$z.score=z.score(temp$value)
+
+  x.label=unique(temp$var.description)
+  y.label="Government education spending per capita"
+  title.label=paste0(x.label," & ",y.label )
+
+  p=ggplot(temp, aes(y=educ.per.cap.ave,x=value,label=region))+
+    geom_point(color="grey")+
+    geom_text(check_overlap=T,  size=2.5)+
+    labs(y=y.label,x=x.label)+
+    theme_classic()+
+    theme(legend.title=element_blank())+  
+    geom_smooth(method="lm")+
+    scale_y_continuous(labels=scales::dollar)
+  cat("\n")
+  cat("### ",title.label,"\n")
+  
+print(p)
+  cat("\n\n\\pagebreak\n")
+ 
+  x.label.z=paste(unique(temp$var.description),"z score")
+  y.label.z=paste("Government education spending per capita","z score")
+  title.label.z=paste0(x.label.z," & ",y.label.z )
+
+  
+  
+  p=ggplot(temp, aes(y=educ.per.cap.ave.z,x=z.score,label=region))+
+    geom_point(color="grey")+
+    geom_text(check_overlap=T,  size=2.5)+
+    labs(y=y.label.z,x=x.label.z)+
+    theme_classic()+
+    theme(legend.title=element_blank())+  
+    geom_smooth(method="lm")+
+    geom_vline(xintercept = 0)+
+    geom_hline(yintercept=0) 
+   
+   cat("\n")
+  cat("### ",title.label,"\n")
+  print(p)
+ cat("\n\n\\pagebreak\n")
+ cat("\n\n\\blandscape\n")
+  reg=lm(temp$value~temp$educ.per.cap.ave)
+ reg2=glm(rescale(temp$value)~temp$educ.per.cap.ave,family=binomial(link="probit"))
+  reg3=lm(temp$value[which(temp$z.score<2 & temp$educ.per.cap.ave.z<2)]~temp$educ.per.cap.ave[which(temp$z.score<2& temp$educ.per.cap.ave.z<2)])
+ stargazer(reg,reg2,reg3,dep.var.labels=c("Education spending per capita","Education spending per capita","Outliers dropped"),covariate.labels =c(x.label,x.label) ,header=F)
+ cat("\n\n\\elandscape\n")
+ cat("\n\n\\pagebreak\n")
+  
+}
+
+```

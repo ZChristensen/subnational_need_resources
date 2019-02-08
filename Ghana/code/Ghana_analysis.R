@@ -206,4 +206,6 @@ dat$need.vs.resources[which(dat$educ.and.health.per.cap.ave>median(dat$educ.and.
 dat$need.vs.resources[which(dat$educ.and.health.per.cap.ave>median(dat$educ.and.health.per.cap.ave)&dat$MPI>median(dat$MPI))]="high poverty high resources"
 dat$need.vs.resources[which(dat$educ.and.health.per.cap.ave<=median(dat$educ.and.health.per.cap.ave)&dat$MPI>median(dat$MPI))]="high poverty low resources"
 
+dat2=dat[c("region","educ.per.cap.ave","School.attendance","health.per.cap.ave","Child.mortality","MPI.of.the.region","need.vs.resources","MPI.pop.2016","Country")]
+fwrite(dat2,"graphics/output.csv")
 
